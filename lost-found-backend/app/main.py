@@ -1,6 +1,8 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from database.database import Base, engine
+from core.config import UPLOAD_DIR
 
 import models.tenant  # noqa: F401
 import models.user    # noqa: F401
@@ -16,6 +18,8 @@ from routers.claims import router as claims_router
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Lost & Found API")
+
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 app.include_router(auth_router)
 app.include_router(tenants_router)

@@ -1,12 +1,21 @@
 from typing import Any, TypedDict
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 
 from auth.jwt_handler import verify_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+bearer_scheme = HTTPBearer()
+
+
+def _normalize_token(token: str) -> str:
+    token = token.strip()
+    if token.startswith('"') and token.endswith('"'):
+        token = token[1:-1]
+    if token.lower().startswith("bearer "):
+        token = token[7:].strip()
+    return token
 
 
 class CurrentUser(TypedDict):
@@ -17,8 +26,9 @@ class CurrentUser(TypedDict):
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ) -> CurrentUser:
+    token = _normalize_token(credentials.credentials)
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

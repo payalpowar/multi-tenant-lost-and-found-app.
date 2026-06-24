@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 from typing import List
 
 from auth.dependencies import CurrentUser, get_current_user
 from database.database import get_db
-from schemas.claim import ClaimCreate, ClaimUpdate, ClaimResponse
+from schemas.claim import ClaimCreate, ClaimUpdate, ClaimResponse, ClaimImageResponse
 from services.claim_service import ClaimService
 
 router = APIRouter(
@@ -68,6 +68,28 @@ def get_claims_by_user(
         db,
         user_id,
         current_user["tenant_id"]
+    )
+
+
+@router.post(
+    "/{claim_id}/image",
+    response_model=ClaimImageResponse
+)
+async def upload_claim_image(
+    claim_id: int,
+    image: UploadFile = File(...),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    claim = await ClaimService.upload_image(
+        db,
+        claim_id,
+        current_user["tenant_id"],
+        image
+    )
+    return ClaimImageResponse(
+        claim_id=claim.claim_id,
+        image_url=claim.image_url
     )
 
 

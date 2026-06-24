@@ -1,10 +1,11 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from repositories.claim_repository import ClaimRepository
 from repositories.item_repository import ItemRepository
 from repositories.user_repository import UserRepository
 from repositories.tenant_repository import TenantRepository
+from storage.s3_service import upload_image as upload_image_to_storage
 
 VALID_STATUSES = ["pending", "approved", "rejected"]
 
@@ -44,6 +45,8 @@ class ClaimService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid status. Must be one of: pending, approved, rejected"
             )
+
+        claim_data.setdefault("image_url", None)
 
         return ClaimRepository.create_claim(db, claim_data)
 
@@ -152,3 +155,25 @@ class ClaimService:
         ClaimRepository.delete_claim(db, claim)
 
         return {"message": "Claim deleted successfully"}
+
+    @staticmethod
+    async def upload_image(
+        db: Session,
+        claim_id: int,
+        tenant_id: int,
+        image: UploadFile
+    ):
+        claim = ClaimRepository.get_claim_by_id(db, claim_id, tenant_id)
+
+        if not claim:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Claim not found"
+            )
+
+        image_url = await upload_image_to_storage(
+            image,
+            f"tenant_{tenant_id}/claims/{claim_id}"
+        )
+
+        return ClaimRepository.update_image_url(db, claim, image_url)

@@ -102,3 +102,15 @@ class ClaimRepository:
     ):
         db.delete(claim)
         db.commit()
+
+    @staticmethod
+    def update_image_url(
+        db: Session,
+        claim: Claim,
+        image_url: str
+    ):
+        claim.image_url = image_url
+        db.commit()
+        db.refresh(claim)
+        return claim
+

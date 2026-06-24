@@ -11,7 +11,7 @@ class ItemCreate(BaseModel):
     material: str
     tags: str
     category: str
-    image_url: str
+    image_url: Optional[str] = ""
     location: str
     status: str
 
@@ -47,3 +47,8 @@ class ItemResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ItemImageResponse(BaseModel):
+    item_id: int
+    image_url: str

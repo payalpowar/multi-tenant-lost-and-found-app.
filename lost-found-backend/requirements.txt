@@ -7,3 +7,5 @@ pydantic-settings
 python-dotenv
 bcrypt
 python-jose[cryptography]
+python-multipart
+boto3

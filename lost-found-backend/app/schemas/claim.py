@@ -23,7 +23,13 @@ class ClaimResponse(BaseModel):
     proof: str
     remarks: str
     status: str
+    image_url: Optional[str] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class ClaimImageResponse(BaseModel):
+    claim_id: int
+    image_url: str

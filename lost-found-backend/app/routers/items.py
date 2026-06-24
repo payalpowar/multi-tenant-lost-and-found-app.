@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 from typing import List
 
 from auth.dependencies import CurrentUser, get_current_user
 from database.database import get_db
-from schemas.item import ItemCreate, ItemUpdate, ItemResponse
+from schemas.item import ItemCreate, ItemUpdate, ItemResponse, ItemImageResponse
 from services.item_service import ItemService
 
 router = APIRouter(
@@ -37,6 +37,28 @@ def get_all_items(
     db: Session = Depends(get_db)
 ):
     return ItemService.get_all_items(db, current_user["tenant_id"])
+
+
+@router.post(
+    "/{item_id}/image",
+    response_model=ItemImageResponse
+)
+async def upload_item_image(
+    item_id: int,
+    image: UploadFile = File(...),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    item = await ItemService.upload_image(
+        db,
+        item_id,
+        current_user["tenant_id"],
+        image
+    )
+    return ItemImageResponse(
+        item_id=item.item_id,
+        image_url=item.image_url
+    )
 
 
 @router.get(
